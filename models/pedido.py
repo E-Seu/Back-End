@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -8,9 +8,9 @@ class Pedido(Base):
     cliente_id = Column(Integer, ForeignKey('clientes.cliente_id'))
     restaurante_id = Column(Integer, ForeignKey('restaurantes.restaurante_id'))
     entregador_id = Column(Integer, ForeignKey('entregadores.entregador_id'))
-    status = Column(String(50))
-    preco_total = Column(Float)
-    localizacao = Column(String(255))
+    status = Column(String(20))
+    preco_total = Column(Numeric(10, 2))
+    localizacao = Column(Text)
     data_hora = Column(DateTime)
     observacao = Column(Text)
     cliente = relationship('Cliente', back_populates='pedidos')

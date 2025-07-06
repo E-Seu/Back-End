@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, Text
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -8,7 +8,7 @@ class Produto(Base):
     restaurante_id = Column(Integer, ForeignKey('restaurantes.restaurante_id'))
     nome = Column(String(100), nullable=False)
     descricao = Column(Text)
-    preco = Column(Float, nullable=False)
+    preco = Column(Numeric(10, 2), default=0.0)
     tempo_preparo = Column(Integer)
     disponivel = Column(Boolean, default=True)
     restaurante = relationship('Restaurante', back_populates='produtos')
