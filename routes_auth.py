@@ -4,6 +4,7 @@ from typing import Dict
 from routes_cliente import db_clientes
 from routes_entregador import db_entregadores
 from routes_restaurante import db_restaurantes
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter()
 
@@ -14,6 +15,10 @@ mock_usuarios = [
     {"usuario_id": 3, "nome": "Restaurante Teste", "email": "restaurante@email.com", "senha": "123", "papel": "restaurante"}
 ]
 
+class AuthRequest(BaseModel):
+    email: EmailStr
+    senha: str
+
 def autenticar(email: str, senha: str, papel: str) -> Dict:
     for u in mock_usuarios:
         if u["email"] == email and u["senha"] == senha and u["papel"] == papel:
@@ -22,10 +27,22 @@ def autenticar(email: str, senha: str, papel: str) -> Dict:
 
 # Endpoints de Autenticação
 
+@router.post("/auth/cliente", response_model=UsuarioRead)
+def autenticar_cliente(auth: AuthRequest):
+    return autenticar(str(auth.email), auth.senha, "cliente")
+
+@router.post("/auth/entregador", response_model=UsuarioRead)
+def autenticar_entregador(auth: AuthRequest):
+    return autenticar(str(auth.email), auth.senha, "entregador")
+
+@router.post("/auth/restaurante", response_model=UsuarioRead)
+def autenticar_restaurante(auth: AuthRequest):
+    return autenticar(str(auth.email), auth.senha, "restaurante")
+
 @router.post("/auth/login")
-def login(usuario: UsuarioCreate):
+def login(auth: AuthRequest):
     for u in mock_usuarios:
-        if u["email"] == str(usuario.email) and u["senha"] == usuario.senha:
+        if u["email"] == str(auth.email) and u["senha"] == auth.senha:
             return {"usuario_id": u["usuario_id"], "nome": u["nome"], "email": u["email"], "papel": u["papel"]}
     raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
