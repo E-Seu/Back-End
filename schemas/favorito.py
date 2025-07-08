@@ -9,4 +9,4 @@ class FavoritoCreate(FavoritoBase):
 
 class FavoritoRead(FavoritoBase):
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pydantic import BaseModel
 
 class PedidoProdutoBase(BaseModel):
@@ -13,4 +14,4 @@ class PedidoProdutoRead(PedidoProdutoBase):
     produto_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

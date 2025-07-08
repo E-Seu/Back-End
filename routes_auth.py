@@ -1,0 +1,94 @@
+from fastapi import APIRouter, HTTPException
+from schemas.usuario import UsuarioCreate, UsuarioRead
+from typing import Dict
+from routes_cliente import db_clientes
+from routes_entregador import db_entregadores
+from routes_restaurante import db_restaurantes
+
+router = APIRouter()
+
+# Mock banco de usuários
+mock_usuarios = [
+    {"usuario_id": 1, "nome": "Cliente Teste", "email": "cliente@email.com", "senha": "123", "papel": "cliente"},
+    {"usuario_id": 2, "nome": "Entregador Teste", "email": "entregador@email.com", "senha": "123", "papel": "entregador"},
+    {"usuario_id": 3, "nome": "Restaurante Teste", "email": "restaurante@email.com", "senha": "123", "papel": "restaurante"}
+]
+
+def autenticar(email: str, senha: str, papel: str) -> Dict:
+    for u in mock_usuarios:
+        if u["email"] == email and u["senha"] == senha and u["papel"] == papel:
+            return {"usuario_id": u["usuario_id"], "nome": u["nome"], "email": u["email"], "papel": papel}
+    raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+# Endpoints de Autenticação
+
+@router.post("/auth/login")
+def login(usuario: UsuarioCreate):
+    for u in mock_usuarios:
+        if u["email"] == str(usuario.email) and u["senha"] == usuario.senha:
+            return {"usuario_id": u["usuario_id"], "nome": u["nome"], "email": u["email"], "papel": u["papel"]}
+    raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+@router.post("/auth/registrar/cliente", response_model=UsuarioRead)
+def registrar_cliente(usuario: UsuarioCreate):
+    novo_id = len(mock_usuarios) + 1
+    novo_usuario = {
+        "usuario_id": novo_id,
+        "nome": usuario.nome,
+        "email": usuario.email,
+        "senha": usuario.senha,
+        "papel": "cliente"
+    }
+    mock_usuarios.append(novo_usuario)
+    # Adiciona também ao db_clientes
+    db_clientes.append({
+        "cliente_id": novo_id,
+        "usuario_id": novo_id,
+        "saldo": 0.0})
+    return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
+
+@router.post("/auth/registrar/entregador", response_model=UsuarioRead)
+def registrar_entregador(usuario: UsuarioCreate):
+    novo_id = len(mock_usuarios) + 1
+    novo_usuario = {
+        "usuario_id": novo_id,
+        "nome": usuario.nome,
+        "email": usuario.email,
+        "senha": usuario.senha,
+        "papel": "entregador"
+    }
+    mock_usuarios.append(novo_usuario)
+    # Adiciona também ao db_entregadores
+    db_entregadores.append({
+        "entregador_id": novo_id,
+        "usuario_id": novo_id,
+        "veiculo": "",
+        "avaliacao": 0.0,
+        "saldo": 0.0,
+        "disponivel": False})
+    return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
+
+@router.post("/auth/registrar/restaurante", response_model=UsuarioRead)
+def registrar_restaurante(usuario: UsuarioCreate):
+    novo_id = len(mock_usuarios) + 1
+    novo_usuario = {
+        "usuario_id": novo_id,
+        "nome": usuario.nome,
+        "email": usuario.email,
+        "senha": usuario.senha,
+        "papel": "restaurante"
+    }
+    mock_usuarios.append(novo_usuario)
+    # Adiciona também ao db_restaurantes
+    db_restaurantes.append({
+        "restaurante_id": novo_id,
+        "usuario_id": novo_id,
+        "nome": usuario.nome,
+        "telefone": "",
+        "tipo_restaurante": "",
+        "localizacao": "",
+        "avaliacao": 0.0,
+        "saldo": 0.0,
+        "disponivel": False
+    })
+    return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
