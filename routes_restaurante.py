@@ -11,23 +11,31 @@ db_restaurantes = [
         "restaurante_id": 1,
         "usuario_id": 1,
         "nome": "Restaurante Sabor Caseiro",
+        "info": "Comida caseira brasileira feita com amor",
+        "local": "Rua das Flores, 123",
+        "email": "saborcaseiro@email.com",
+        "horario_abertura": "11:00",
+        "horario_fechamento": "22:00",
+        "numero_estrelas": 4.5,
+        "disponivel": True,
         "telefone": "11999999999",
         "tipo_restaurante": "Brasileira",
-        "localizacao": "Rua das Flores, 123",
-        "avaliacao": 4.5,
-        "saldo": 1000.00,
-        "disponivel": True
+        "saldo": "1000.00"
     },
     {
         "restaurante_id": 2,
         "usuario_id": 2,
         "nome": "Pizzaria Bella Massa",
+        "info": "Pizzas tradicionais italianas",
+        "local": "Av. Central, 456",
+        "email": "bellamassa@email.com",
+        "horario_abertura": "18:00",
+        "horario_fechamento": "23:00",
+        "numero_estrelas": 4.8,
+        "disponivel": False,
         "telefone": "11888888888",
         "tipo_restaurante": "Italiana",
-        "localizacao": "Av. Central, 456",
-        "avaliacao": 4.8,
-        "saldo": 500.00,
-        "disponivel": False
+        "saldo": "500.00"
     }
 ]
 db_produtos = [
@@ -35,19 +43,21 @@ db_produtos = [
         "produto_id": 1,
         "restaurante_id": 1,
         "nome": "Feijoada",
-        "descricao": "Feijoada completa",
-        "preco": 49.90,
+        "descricao": "Feijoada completa com arroz, couve e farofa",
+        "valor": "49.90",
         "tempo_preparo": 40,
-        "disponivel": True
+        "disponivel": True,
+        "restricoes": ["sem glúten disponível"]
     },
     {
         "produto_id": 2,
         "restaurante_id": 2,
         "nome": "Pizza Margherita",
-        "descricao": "Pizza tradicional italiana",
-        "preco": 39.90,
+        "descricao": "Pizza tradicional italiana com molho de tomate, mussarela e manjericão",
+        "valor": "39.90",
         "tempo_preparo": 25,
-        "disponivel": True
+        "disponivel": True,
+        "restricoes": ["vegetariano"]
     }
 ]
 
