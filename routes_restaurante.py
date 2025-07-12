@@ -38,6 +38,7 @@ db_restaurantes = [
         "saldo": "500.00"
     }
 ]
+
 db_produtos = [
     {
         "produto_id": 1,
@@ -47,7 +48,13 @@ db_produtos = [
         "valor": "49.90",
         "tempo_preparo": 40,
         "disponivel": True,
-        "restricoes": ["sem glúten disponível"]
+        "selos": {
+            "produto_id": 1,
+            "sem_lactose": False,
+            "sem_gluten": True,
+            "sem_amendoim": True,
+            "vegano": False
+        }
     },
     {
         "produto_id": 2,
@@ -57,7 +64,13 @@ db_produtos = [
         "valor": "39.90",
         "tempo_preparo": 25,
         "disponivel": True,
-        "restricoes": ["vegetariano"]
+        "selos": {
+            "produto_id": 2,
+            "sem_lactose": False,
+            "sem_gluten": False,
+            "sem_amendoim": True,
+            "vegano": True
+        }
     }
 ]
 
@@ -90,6 +103,11 @@ def adicionar_produto(id: int, produto: ProdutoCreate):
     novo_id = len(db_produtos) + 1
     novo_produto = produto.model_dump()
     novo_produto.update({"produto_id": novo_id, "restaurante_id": id})
+    
+    # Se os selos foram fornecidos, adiciona o produto_id
+    if "selos" in novo_produto and novo_produto["selos"]:
+        novo_produto["selos"]["produto_id"] = novo_id
+    
     db_produtos.append(novo_produto)
     return novo_produto
 
@@ -105,7 +123,13 @@ def atualizar_disponibilidade_restaurante(id: int, disponivel: bool):
 def editar_produto(id: int, produto_id: int, produto: ProdutoBase):
     for p in db_produtos:
         if p["produto_id"] == produto_id and p["restaurante_id"] == id:
-            p.update(produto.model_dump())
+            produto_data = produto.model_dump()
+            
+            # Se os selos foram fornecidos, mantém o produto_id
+            if "selos" in produto_data and produto_data["selos"]:
+                produto_data["selos"]["produto_id"] = produto_id
+            
+            p.update(produto_data)
             return p
     raise HTTPException(status_code=404, detail="Produto não encontrado")
 
@@ -121,13 +145,14 @@ def atualizar_disponibilidade_produto(id: int, produto_id: int, disponivel: bool
 def atualizar_saldo_restaurante(id: int, saldo: float):
     for r in db_restaurantes:
         if r["restaurante_id"] == id:
-            r["saldo"] = saldo
-            return {"restaurante_id": id, "saldo": saldo}
+            r["saldo"] = str(saldo)  # Convertendo para string para manter consistência
+            return {"restaurante_id": id, "saldo": str(saldo)}
     raise HTTPException(status_code=404, detail="Restaurante não encontrado")
 
 @router.delete("/restaurante/{id}/produto/{produto_id}")
 def deletar_produto(id: int, produto_id: int):
-    for p in db_produtos:
+    for i, p in enumerate(db_produtos):
         if p["produto_id"] == produto_id and p["restaurante_id"] == id:
-            db_produtos.remove(p)
+            db_produtos.pop(i)
             return {"detail": "Produto removido com sucesso"}
+    raise HTTPException(status_code=404, detail="Produto não encontrado")

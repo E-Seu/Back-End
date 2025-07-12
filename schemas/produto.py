@@ -1,14 +1,15 @@
 from decimal import Decimal
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
+from .selos_produto import SelosProdutoRead
 
 class ProdutoBase(BaseModel):
     nome: str
     descricao: str
-    valor: Decimal = Decimal("0.00")  # Mudando de 'preco' para 'valor' como no exemplo
+    valor: Decimal = Decimal("0.00")
     tempo_preparo: int
     disponivel: bool = True
-    restricoes: List[str] = []  # Lista de restrições (vegetariano, sem glúten, etc)
+    selos: Optional[SelosProdutoRead] = None
 
 class ProdutoCreate(ProdutoBase):
     restaurante_id: int
