@@ -9,6 +9,7 @@ class UsuarioCreate(UsuarioBase):
 
 class UsuarioRead(UsuarioBase):
     usuario_id: int
+    papel: str
 
     class Config:
         from_attributes = True

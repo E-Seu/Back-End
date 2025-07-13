@@ -1,116 +1,106 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from database import get_db, SessionLocal
+from models.usuario import Usuario
 from schemas.usuario import UsuarioCreate, UsuarioRead
-from typing import Dict
-from routes_cliente import db_clientes
-from routes_entregador import db_entregadores
-from routes_restaurante import db_restaurantes
 from pydantic import BaseModel, EmailStr
 
 router = APIRouter()
-
-# Mock banco de usuários
-mock_usuarios = [
-    {"usuario_id": 1, "nome": "Cliente Teste", "email": "cliente@email.com", "senha": "123", "papel": "cliente"},
-    {"usuario_id": 2, "nome": "Entregador Teste", "email": "entregador@email.com", "senha": "123", "papel": "entregador"},
-    {"usuario_id": 3, "nome": "Restaurante Sabor Caseiro", "email": "saborcaseiro@email.com", "senha": "123", "papel": "restaurante"},
-    {"usuario_id": 4, "nome": "Pizzaria Bella Massa", "email": "bellamassa@email.com", "senha": "123", "papel": "restaurante"}
-]
 
 class AuthRequest(BaseModel):
     email: EmailStr
     senha: str
 
-def autenticar(email: str, senha: str, papel: str) -> Dict:
-    for u in mock_usuarios:
-        if u["email"] == email and u["senha"] == senha and u["papel"] == papel:
-            return {"usuario_id": u["usuario_id"], "nome": u["nome"], "email": u["email"], "papel": papel}
+def autenticar(email: str, senha: str, papel: str, db: Session) -> Usuario:
+    usuario = db.query(Usuario).filter(Usuario.email == email, Usuario.senha == senha, Usuario.papel == papel).first()
+    if usuario:
+        return usuario
     raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
 # Endpoints de Autenticação
 
-@router.post("/auth/cliente", response_model=UsuarioRead)
-def autenticar_cliente(auth: AuthRequest):
-    return autenticar(str(auth.email), auth.senha, "cliente")
-
 @router.post("/auth/entregador", response_model=UsuarioRead)
-def autenticar_entregador(auth: AuthRequest):
-    return autenticar(str(auth.email), auth.senha, "entregador")
+def autenticar_entregador(auth: AuthRequest, db: Session = Depends(get_db)):
+    return autenticar(str(auth.email), auth.senha, "entregador", db)
 
 @router.post("/auth/restaurante", response_model=UsuarioRead)
-def autenticar_restaurante(auth: AuthRequest):
-    return autenticar(str(auth.email), auth.senha, "restaurante")
+def autenticar_restaurante(auth: AuthRequest, db: Session = Depends(get_db)):
+    return autenticar(str(auth.email), auth.senha, "restaurante", db)
 
-@router.post("/auth/login")
-def login(auth: AuthRequest):
-    for u in mock_usuarios:
-        if u["email"] == str(auth.email) and u["senha"] == auth.senha:
-            return {"usuario_id": u["usuario_id"], "nome": u["nome"], "email": u["email"], "papel": u["papel"]}
+@router.post("/auth/cliente", response_model=UsuarioRead)
+def autenticar_cliente(auth: AuthRequest, db: Session = Depends(get_db)):
+    return autenticar(str(auth.email), auth.senha, "cliente", db)
+
+@router.post("/auth/login", response_model=UsuarioRead)
+def login(auth: AuthRequest, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.email == str(auth.email), Usuario.senha == auth.senha).first()
+    if usuario:
+        return usuario
     raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
 @router.post("/auth/registrar/cliente", response_model=UsuarioRead)
-def registrar_cliente(usuario: UsuarioCreate):
-    novo_id = len(mock_usuarios) + 1
-    novo_usuario = {
-        "usuario_id": novo_id,
-        "nome": usuario.nome,
-        "email": usuario.email,
-        "senha": usuario.senha,
-        "papel": "cliente"
-    }
-    mock_usuarios.append(novo_usuario)
-    # Adiciona também ao db_clientes
-    db_clientes.append({
-        "cliente_id": novo_id,
-        "usuario_id": novo_id,
-        "saldo": 0.0})
-    return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
+def registrar_cliente(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    if db.query(Usuario).filter(Usuario.email == usuario.email).first():
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    novo_usuario = Usuario(
+        nome=usuario.nome,
+        email=usuario.email,
+        senha=usuario.senha,
+        papel="cliente"
+    )
+    db.add(novo_usuario)
+    db.commit()
+    db.refresh(novo_usuario)
+    from models.cliente import Cliente
+    db.add(Cliente(usuario_id=novo_usuario.usuario_id, saldo=0.0))
+    db.commit()
+    return novo_usuario
 
 @router.post("/auth/registrar/entregador", response_model=UsuarioRead)
-def registrar_entregador(usuario: UsuarioCreate):
-    novo_id = len(mock_usuarios) + 1
-    novo_usuario = {
-        "usuario_id": novo_id,
-        "nome": usuario.nome,
-        "email": usuario.email,
-        "senha": usuario.senha,
-        "papel": "entregador"
-    }
-    mock_usuarios.append(novo_usuario)
-    # Adiciona também ao db_entregadores
-    db_entregadores.append({
-        "entregador_id": novo_id,
-        "usuario_id": novo_id,
-        "veiculo": "",
-        "avaliacao": 0.0,
-        "saldo": "0.00",
-        "disponivel": False})
-    return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
+def registrar_entregador(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    if db.query(Usuario).filter(Usuario.email == usuario.email).first():
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    novo_usuario = Usuario(
+        nome=usuario.nome,
+        email=usuario.email,
+        senha=usuario.senha,
+        papel="entregador"
+    )
+    db.add(novo_usuario)
+    db.commit()
+    db.refresh(novo_usuario)
+    from models.entregador import Entregador
+    db.add(Entregador(usuario_id=novo_usuario.usuario_id, veiculo="", avaliacao=0.0, saldo=0.0, disponivel=False))
+    db.commit()
+    return novo_usuario
 
 @router.post("/auth/registrar/restaurante", response_model=UsuarioRead)
-def registrar_restaurante(usuario: UsuarioCreate):
-    novo_id = len(mock_usuarios) + 1
-    novo_usuario = {
-        "usuario_id": novo_id,
-        "nome": usuario.nome,
-        "email": usuario.email,
-        "senha": usuario.senha,
-        "papel": "restaurante"
-    }
-    mock_usuarios.append(novo_usuario)
-    # Adiciona também ao db_restaurantes
-    db_restaurantes.append({
-        "restaurante_id": novo_id,
-        "usuario_id": novo_id,
-        "nome": usuario.nome,
-        "info": "Novo restaurante",
-        "local": "",
-        "email": usuario.email,
-        "horario_abertura": "09:00",
-        "horario_fechamento": "22:00",
-        "numero_estrelas": 0.0,
-        "disponivel": False,
-        "telefone": "",
-        "tipo_restaurante": "",
-        "saldo": "0.00"
-    })
-    return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
+def registrar_restaurante(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    if db.query(Usuario).filter(Usuario.email == usuario.email).first():
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    novo_usuario = Usuario(
+        nome=usuario.nome,
+        email=usuario.email,
+        senha=usuario.senha,
+        papel="restaurante"
+    )
+    db.add(novo_usuario)
+    db.commit()
+    db.refresh(novo_usuario)
+    from models.restaurante import Restaurante
+    db.add(Restaurante(
+        usuario_id=novo_usuario.usuario_id,
+        nome=novo_usuario.nome,
+        info="",
+        local="",
+        email=novo_usuario.email,
+        horario_abertura="",
+        horario_fechamento="",
+        numero_estrelas=0.0,
+        disponivel=False,
+        telefone=None,
+        tipo_restaurante=None,
+        saldo=0.0
+    ))
+    db.commit()
+    return novo_usuario

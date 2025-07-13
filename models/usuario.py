@@ -8,6 +8,7 @@ class Usuario(Base):
     nome = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     senha = Column(String(20), nullable=False)
+    papel = Column(String(20), nullable=False)
     cliente = relationship('Cliente', back_populates='usuario', uselist=False)
     entregador = relationship('Entregador', back_populates='usuario', uselist=False)
     restaurante = relationship('Restaurante', back_populates='usuario', uselist=False)
