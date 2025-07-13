@@ -5,8 +5,7 @@ router = APIRouter()
 
 # Mock data para exemplo
 db_entregadores = [
-    {"entregador_id": 1, "usuario_id": 1, "veiculo": "moto", "avaliacao": 4.7, "saldo": 300.00, "disponivel": True},
-    {"entregador_id": 2, "usuario_id": 2, "veiculo": "carro", "avaliacao": 4.2, "saldo": 120.00, "disponivel": False}
+    {"entregador_id": 1, "usuario_id": 2, "veiculo": "moto", "avaliacao": 4.7, "saldo": "300.00", "disponivel": True}
 ]
 
 # Endpoints de Entregador
@@ -36,8 +35,8 @@ def atualizar_disponibilidade(id: int, disponivel: bool):
 def atualizar_saldo_entregador(id: int, saldo: float):
     for e in db_entregadores:
         if e["entregador_id"] == id:
-            e["saldo"] = saldo
-            return {"entregador_id": id, "saldo": saldo}
+            e["saldo"] = str(saldo)
+            return {"entregador_id": id, "saldo": str(saldo)}
     raise HTTPException(status_code=404, detail="Entregador não encontrado")
 
 @router.post("/entregador", response_model=EntregadorRead)

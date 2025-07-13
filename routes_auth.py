@@ -12,7 +12,8 @@ router = APIRouter()
 mock_usuarios = [
     {"usuario_id": 1, "nome": "Cliente Teste", "email": "cliente@email.com", "senha": "123", "papel": "cliente"},
     {"usuario_id": 2, "nome": "Entregador Teste", "email": "entregador@email.com", "senha": "123", "papel": "entregador"},
-    {"usuario_id": 3, "nome": "Restaurante Teste", "email": "restaurante@email.com", "senha": "123", "papel": "restaurante"}
+    {"usuario_id": 3, "nome": "Restaurante Sabor Caseiro", "email": "saborcaseiro@email.com", "senha": "123", "papel": "restaurante"},
+    {"usuario_id": 4, "nome": "Pizzaria Bella Massa", "email": "bellamassa@email.com", "senha": "123", "papel": "restaurante"}
 ]
 
 class AuthRequest(BaseModel):
@@ -81,7 +82,7 @@ def registrar_entregador(usuario: UsuarioCreate):
         "usuario_id": novo_id,
         "veiculo": "",
         "avaliacao": 0.0,
-        "saldo": 0.0,
+        "saldo": "0.00",
         "disponivel": False})
     return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}
 
@@ -101,11 +102,15 @@ def registrar_restaurante(usuario: UsuarioCreate):
         "restaurante_id": novo_id,
         "usuario_id": novo_id,
         "nome": usuario.nome,
+        "info": "Novo restaurante",
+        "local": "",
+        "email": usuario.email,
+        "horario_abertura": "09:00",
+        "horario_fechamento": "22:00",
+        "numero_estrelas": 0.0,
+        "disponivel": False,
         "telefone": "",
         "tipo_restaurante": "",
-        "localizacao": "",
-        "avaliacao": 0.0,
-        "saldo": 0.0,
-        "disponivel": False
+        "saldo": "0.00"
     })
     return {"usuario_id": novo_id, "nome": usuario.nome, "email": usuario.email}

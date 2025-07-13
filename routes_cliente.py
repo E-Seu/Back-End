@@ -6,16 +6,13 @@ router = APIRouter()
 
 # Mock data para exemplo
 db_clientes = [
-    {"cliente_id": 1, "usuario_id": 1, "saldo": 200.00},
-    {"cliente_id": 2, "usuario_id": 2, "saldo": 150.00}
+    {"cliente_id": 1, "usuario_id": 1, "saldo": 200.00}
 ]
 db_favoritos = {
-    1: [1, 2],  # cliente_id: [restaurante_ids]
-    2: [2]
+    1: [1, 2]  # cliente_id: [restaurante_ids]
 }
 db_restricoes = {
-    1: ["sem lactose"],
-    2: []
+    1: ["sem lactose"]
 }
 
 # Endpoints de Cliente

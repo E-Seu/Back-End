@@ -20,7 +20,7 @@ db_pedidos = [
     },
     {
         "pedido_id": 2,
-        "cliente_id": 2,
+        "cliente_id": 1,
         "restaurante_id": 2,
         "entregador_id": None,
         "status": "aguardando",
@@ -47,7 +47,7 @@ def historico_pedidos(usuario_id: int):
 @router.post("/pedidos", response_model=PedidoRead)
 def criar_pedido(pedido: PedidoBase):
     novo_id = len(db_pedidos) + 1
-    novo_pedido = pedido.dict()
+    novo_pedido = pedido.model_dump()
     novo_pedido.update({"pedido_id": novo_id, "data_hora": datetime.now()})
     db_pedidos.append(novo_pedido)
     return novo_pedido

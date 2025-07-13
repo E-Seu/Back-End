@@ -9,7 +9,7 @@ router = APIRouter()
 db_restaurantes = [
     {
         "restaurante_id": 1,
-        "usuario_id": 1,
+        "usuario_id": 3,
         "nome": "Restaurante Sabor Caseiro",
         "info": "Comida caseira brasileira feita com amor",
         "local": "Rua das Flores, 123",
@@ -24,7 +24,7 @@ db_restaurantes = [
     },
     {
         "restaurante_id": 2,
-        "usuario_id": 2,
+        "usuario_id": 4,
         "nome": "Pizzaria Bella Massa",
         "info": "Pizzas tradicionais italianas",
         "local": "Av. Central, 456",
