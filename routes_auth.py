@@ -55,10 +55,12 @@ def login(auth: AuthRequest, db: Session = Depends(get_db)):
         return usuario
     raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
-@router.post("/auth/registrar/cliente", response_model=UsuarioRead)
+@router.post("/auth/registrar/cliente", response_model=dict)
 def registrar_cliente(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     if db.query(Usuario).filter(Usuario.email == usuario.email).first():
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    
+    # Criar usuário
     novo_usuario = Usuario(
         nome=usuario.nome,
         email=usuario.email,
@@ -68,21 +70,31 @@ def registrar_cliente(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
+    
+    # Criar cliente
     from models.cliente import Cliente
     novo_cliente = Cliente(
         usuario_id=novo_usuario.usuario_id,
-        nome=usuario.nome,
-        email=usuario.email,
         saldo=Decimal("0.0")
     )
     db.add(novo_cliente)
     db.commit()
-    return novo_usuario
+    db.refresh(novo_cliente)
+    
+    return {
+        "usuario_id": novo_usuario.usuario_id,
+        "cliente_id": novo_cliente.cliente_id,
+        "nome": novo_usuario.nome,
+        "email": novo_usuario.email,
+        "papel": novo_usuario.papel
+    }
 
 @router.post("/auth/registrar/entregador", response_model=UsuarioRead)
 def registrar_entregador(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     if db.query(Usuario).filter(Usuario.email == usuario.email).first():
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    
+    # Criar usuário
     novo_usuario = Usuario(
         nome=usuario.nome,
         email=usuario.email,
@@ -92,11 +104,11 @@ def registrar_entregador(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
+    
+    # Criar entregador - verificar campos do modelo
     from models.entregador import Entregador
     novo_entregador = Entregador(
         usuario_id=novo_usuario.usuario_id,
-        nome=usuario.nome,
-        email=usuario.email,
         veiculo="Bicicleta",
         avaliacao=0.0,
         saldo=Decimal("0.0"),
@@ -104,6 +116,7 @@ def registrar_entregador(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     )
     db.add(novo_entregador)
     db.commit()
+    
     return novo_usuario
 
 @router.post("/auth/registrar/restaurante", response_model=UsuarioRead)
