@@ -5,8 +5,13 @@ from models.pedido import Pedido
 from schemas.pedido import PedidoRead, PedidoCreate, PedidoBase
 from typing import List
 from datetime import datetime
+from pydantic import BaseModel
 
 router = APIRouter()
+
+# Schema para atualizar status
+class StatusRequest(BaseModel):
+    status: str
 
 # Endpoints de Pedido
 @router.get("/pedidos/{id}", response_model=PedidoRead)
@@ -30,13 +35,13 @@ def criar_pedido(pedido: PedidoBase, db: Session = Depends(get_db)):
     return novo_pedido
 
 @router.put("/pedidos/{id}/status")
-def atualizar_status_pedido(id: int, status: str, db: Session = Depends(get_db)):
+def atualizar_status_pedido(id: int, dados: StatusRequest, db: Session = Depends(get_db)):
     pedido = db.query(Pedido).filter(Pedido.pedido_id == id).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
-    pedido.status = status
+    pedido.status = dados.status
     db.commit()
-    return {"pedido_id": id, "novo_status": status}
+    return {"pedido_id": id, "novo_status": dados.status}
 
 @router.put("/pedidos/{id}/cancelar")
 def cancelar_pedido(id: int, db: Session = Depends(get_db)):
