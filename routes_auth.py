@@ -4,12 +4,29 @@ from database import get_db, SessionLocal
 from models.usuario import Usuario
 from schemas.usuario import UsuarioCreate, UsuarioRead
 from pydantic import BaseModel, EmailStr
+from decimal import Decimal
+from typing import Optional
 
 router = APIRouter()
 
 class AuthRequest(BaseModel):
     email: EmailStr
     senha: str
+
+# Schema específico para registro de restaurante
+class RestauranteRegister(BaseModel):
+    nome: str
+    email: EmailStr
+    senha: str
+    info: str
+    local: str
+    horario_abertura: str
+    horario_fechamento: str
+    telefone: Optional[str] = None
+    tipo_restaurante: Optional[str] = None
+    numero_estrelas: float = 0.0
+    disponivel: bool = True
+    saldo: float = 0.0
 
 def autenticar(email: str, senha: str, papel: str, db: Session) -> Usuario:
     usuario = db.query(Usuario).filter(Usuario.email == email, Usuario.senha == senha, Usuario.papel == papel).first()
@@ -52,7 +69,13 @@ def registrar_cliente(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(novo_usuario)
     from models.cliente import Cliente
-    db.add(Cliente(usuario_id=novo_usuario.usuario_id, saldo=0.0))
+    novo_cliente = Cliente(
+        usuario_id=novo_usuario.usuario_id,
+        nome=usuario.nome,
+        email=usuario.email,
+        saldo=Decimal("0.0")
+    )
+    db.add(novo_cliente)
     db.commit()
     return novo_usuario
 
@@ -70,14 +93,25 @@ def registrar_entregador(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(novo_usuario)
     from models.entregador import Entregador
-    db.add(Entregador(usuario_id=novo_usuario.usuario_id, veiculo="", avaliacao=0.0, saldo=0.0, disponivel=False))
+    novo_entregador = Entregador(
+        usuario_id=novo_usuario.usuario_id,
+        nome=usuario.nome,
+        email=usuario.email,
+        veiculo="Bicicleta",
+        avaliacao=0.0,
+        saldo=Decimal("0.0"),
+        disponivel=True
+    )
+    db.add(novo_entregador)
     db.commit()
     return novo_usuario
 
 @router.post("/auth/registrar/restaurante", response_model=UsuarioRead)
-def registrar_restaurante(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+def registrar_restaurante(usuario: RestauranteRegister, db: Session = Depends(get_db)):
     if db.query(Usuario).filter(Usuario.email == usuario.email).first():
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    
+    # Criar usuário
     novo_usuario = Usuario(
         nome=usuario.nome,
         email=usuario.email,
@@ -87,20 +121,25 @@ def registrar_restaurante(usuario: UsuarioCreate, db: Session = Depends(get_db))
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
+    
+    # Criar restaurante com todos os campos
     from models.restaurante import Restaurante
-    db.add(Restaurante(
+    novo_restaurante = Restaurante(
         usuario_id=novo_usuario.usuario_id,
-        nome=novo_usuario.nome,
-        info="",
-        local="",
-        email=novo_usuario.email,
-        horario_abertura="",
-        horario_fechamento="",
-        numero_estrelas=0.0,
-        disponivel=False,
-        telefone=None,
-        tipo_restaurante=None,
-        saldo=0.0
-    ))
+        nome=usuario.nome,
+        info=usuario.info,
+        local=usuario.local,
+        email=usuario.email,
+        horario_abertura=usuario.horario_abertura,
+        horario_fechamento=usuario.horario_fechamento,
+        telefone=usuario.telefone,
+        tipo_restaurante=usuario.tipo_restaurante,
+        numero_estrelas=usuario.numero_estrelas,
+        disponivel=usuario.disponivel,
+        saldo=Decimal(str(usuario.saldo))
+    )
+    db.add(novo_restaurante)
     db.commit()
+    db.refresh(novo_restaurante)
+    
     return novo_usuario
