@@ -3,6 +3,9 @@ from typing import Optional
 from datetime import datetime
 from decimal import Decimal
 
+from typing import List
+from schemas.pedido_produto import PedidoProdutoCreate, PedidoProdutoRead
+
 class PedidoBase(BaseModel):
     cliente_id: int
     restaurante_id: int
@@ -14,10 +17,11 @@ class PedidoBase(BaseModel):
     observacao: Optional[str] = None
 
 class PedidoCreate(PedidoBase):
-    pass
+    produtos: List[PedidoProdutoCreate]
 
 class PedidoRead(PedidoBase):
     pedido_id: int
+    pedido_produtos: List[PedidoProdutoRead]
 
     class Config:
         from_attributes = True

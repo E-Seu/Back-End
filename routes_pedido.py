@@ -26,13 +26,34 @@ def historico_pedidos(usuario_id: int, db: Session = Depends(get_db)):
     historico = db.query(Pedido).filter(Pedido.cliente_id == usuario_id).all()
     return historico
 
+from models.pedido_produto import PedidoProduto
+from schemas.pedido_produto import PedidoProdutoCreate
+from sqlalchemy.orm import joinedload
+
 @router.post("/pedidos", response_model=PedidoRead)
-def criar_pedido(pedido: PedidoBase, db: Session = Depends(get_db)):
-    novo_pedido = Pedido(**pedido.model_dump())
+def criar_pedido(pedido: PedidoCreate, db: Session = Depends(get_db)):
+    # Cria o pedido
+    produtos_data = pedido.produtos
+    pedido_data = pedido.model_dump(exclude={"produtos"})
+    novo_pedido = Pedido(**pedido_data)
     db.add(novo_pedido)
     db.commit()
     db.refresh(novo_pedido)
-    return novo_pedido
+
+    # Cria os itens do pedido
+    for item in produtos_data:
+        pedido_produto = PedidoProduto(
+            pedido_id=novo_pedido.pedido_id,
+            produto_id=item.produto_id,
+            quantidade=item.quantidade,
+            preco_item=item.preco_item
+        )
+        db.add(pedido_produto)
+    db.commit()
+
+    # Retorna o pedido com os produtos
+    pedido_completo = db.query(Pedido).options(joinedload(Pedido.pedido_produtos).joinedload(PedidoProduto.produto)).filter(Pedido.pedido_id == novo_pedido.pedido_id).first()
+    return pedido_completo
 
 @router.put("/pedidos/{id}/status")
 def atualizar_status_pedido(id: int, dados: StatusRequest, db: Session = Depends(get_db)):
