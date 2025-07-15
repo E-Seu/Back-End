@@ -9,6 +9,13 @@ from models.selos_cliente import SelosCliente
 
 router = APIRouter()
 
+@router.get("/usuario/{usuario_id}/nome")
+def get_nome_cliente(usuario_id: int, db: Session = Depends(get_db)):
+    cliente = db.query(Cliente).filter(Cliente.usuario_id == usuario_id).first()
+    if not cliente or not hasattr(cliente, 'usuario') or not hasattr(cliente.usuario, 'nome'):
+        raise HTTPException(status_code=404, detail="Cliente ou nome de usuário não encontrado")
+    return {"usuario_id": usuario_id, "nome": cliente.usuario.nome}
+
 # Endpoints de Cliente - usando usuario_id em vez de cliente_id
 @router.get("/clientes/{id}", response_model=ClienteRead)
 def get_cliente(id: int, db: Session = Depends(get_db)):
