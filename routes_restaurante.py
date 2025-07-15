@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.restaurante import Restaurante
 from models.produto import Produto
+from models.pedido import Pedido
 from schemas.restaurante import RestauranteRead
 from schemas.produto import ProdutoRead, ProdutoCreate, ProdutoBase
+from schemas.pedido import PedidoRead
 from typing import List
 from decimal import Decimal
 from pydantic import BaseModel
@@ -38,6 +40,21 @@ def visualizar_saldo_restaurante(id: int, db: Session = Depends(get_db)):
 def listar_produtos(id: int, db: Session = Depends(get_db)):
     produtos = db.query(Produto).filter(Produto.restaurante_id == id).all()
     return produtos
+
+@router.get("/restaurantes/{id}/pedidos", response_model=List[PedidoRead])
+def listar_pedidos_restaurante(id: int, db: Session = Depends(get_db)):
+    """Buscar todos os pedidos de um restaurante específico"""
+    # Verificar se restaurante existe
+    restaurante = db.query(Restaurante).filter(Restaurante.restaurante_id == id).first()
+    if not restaurante:
+        raise HTTPException(status_code=404, detail="Restaurante não encontrado")
+    
+    # Buscar pedidos do restaurante ordenados por data mais recente
+    pedidos = db.query(Pedido).filter(
+        Pedido.restaurante_id == id
+    ).order_by(Pedido.data_hora.desc()).all()
+    
+    return pedidos
 
 @router.post("/restaurantes/{id}/produto", response_model=ProdutoRead)
 def adicionar_produto(id: int, produto: ProdutoBase, db: Session = Depends(get_db)):
