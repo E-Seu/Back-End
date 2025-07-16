@@ -32,6 +32,13 @@ def atualizar_disponibilidade(id: int, disponivel: bool, db: Session = Depends(g
     db.commit()
     return entregador
 
+@router.get("/entregador/usuario/{usuario_id}", response_model=EntregadorRead)
+def get_entregador_by_usuario_id(usuario_id: int, db: Session = Depends(get_db)):
+    entregador = db.query(Entregador).filter(Entregador.usuario_id == usuario_id).first()
+    if entregador:
+        return entregador
+    raise HTTPException(status_code=404, detail="Entregador não encontrado")
+
 # Rota para visualizar pedidos entregues do entregador
 @router.get("/entregador/{entregador_id}/pedidos_entregues", response_model=List[PedidoRead])
 def visualizar_pedidos_entregues(entregador_id: int, db: Session = Depends(get_db)):
