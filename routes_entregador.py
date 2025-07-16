@@ -1,3 +1,4 @@
+from models.pedido import Pedido
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -46,3 +47,25 @@ def criar_entregador(entregador: EntregadorBase, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(novo_entregador)
     return novo_entregador
+
+# Rota para entregador aceitar pedido
+@router.put("/entregador/{entregador_id}/aceitar_pedido/{pedido_id}")
+def aceitar_pedido(entregador_id: int, pedido_id: int, db: Session = Depends(get_db)):
+    pedido = db.query(Pedido).filter(Pedido.pedido_id == pedido_id).first()
+    entregador = db.query(Entregador).filter(Entregador.entregador_id == entregador_id).first()
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    if not entregador:
+        raise HTTPException(status_code=404, detail="Entregador não encontrado")
+    if pedido.entregador_id is not None:
+        raise HTTPException(status_code=400, detail="Pedido já foi aceito por outro entregador")
+    pedido.entregador_id = entregador_id
+    pedido.status = "em entrega"
+    db.commit()
+    return {"pedido_id": pedido_id, "entregador_id": entregador_id, "status": pedido.status}
+
+# Rota para entregador rejeitar pedido (apenas para controle de tela, não altera o banco)
+@router.put("/entregador/{entregador_id}/rejeitar_pedido/{pedido_id}")
+def rejeitar_pedido(entregador_id: int, pedido_id: int):
+    # Não altera nada no banco, apenas retorna sucesso para o frontend remover da tela
+    return {"pedido_id": pedido_id, "entregador_id": entregador_id, "rejeitado": True}

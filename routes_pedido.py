@@ -1,3 +1,4 @@
+# Rota para listar pedidos disponíveis para entrega (status 'pronto')
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -6,6 +7,9 @@ from schemas.pedido import PedidoRead, PedidoCreate, PedidoBase
 from typing import List
 from datetime import datetime
 from pydantic import BaseModel
+from models.pedido_produto import PedidoProduto
+from schemas.pedido_produto import PedidoProdutoCreate
+from sqlalchemy.orm import joinedload
 
 router = APIRouter()
 
@@ -26,9 +30,10 @@ def historico_pedidos(usuario_id: int, db: Session = Depends(get_db)):
     historico = db.query(Pedido).filter(Pedido.cliente_id == usuario_id).all()
     return historico
 
-from models.pedido_produto import PedidoProduto
-from schemas.pedido_produto import PedidoProdutoCreate
-from sqlalchemy.orm import joinedload
+@router.get("/pedido/disponiveis", response_model=List[PedidoRead])
+def listar_pedidos_disponiveis(db: Session = Depends(get_db)):
+    pedidos = db.query(Pedido).filter(Pedido.status == "pronto").all()
+    return pedidos
 
 @router.post("/pedidos", response_model=PedidoRead)
 def criar_pedido(pedido: PedidoCreate, db: Session = Depends(get_db)):
