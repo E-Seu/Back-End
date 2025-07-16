@@ -1,4 +1,3 @@
-from models.pedido import Pedido
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -60,9 +59,27 @@ def aceitar_pedido(entregador_id: int, pedido_id: int, db: Session = Depends(get
     if pedido.entregador_id is not None:
         raise HTTPException(status_code=400, detail="Pedido já foi aceito por outro entregador")
     pedido.entregador_id = entregador_id
-    pedido.status = "em entrega"
+    pedido.status = "a_caminho"
     db.commit()
     return {"pedido_id": pedido_id, "entregador_id": entregador_id, "status": pedido.status}
+
+
+# Rota para entregador finalizar entrega do pedido
+@router.put("/entregador/{entregador_id}/entregar_pedido/{pedido_id}")
+def entregar_pedido(entregador_id: int, pedido_id: int, db: Session = Depends(get_db)):
+    pedido = db.query(Pedido).filter(Pedido.pedido_id == pedido_id).first()
+    entregador = db.query(Entregador).filter(Entregador.entregador_id == entregador_id).first()
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    if not entregador:
+        raise HTTPException(status_code=404, detail="Entregador não encontrado")
+    if pedido.entregador_id != entregador_id:
+        raise HTTPException(status_code=403, detail="Este pedido não está vinculado a este entregador")
+    pedido.status = "entregue"
+    db.commit()
+    return {"pedido_id": pedido_id, "entregador_id": entregador_id, "status": pedido.status}
+from models.pedido import Pedido
+
 
 # Rota para entregador rejeitar pedido (apenas para controle de tela, não altera o banco)
 @router.put("/entregador/{entregador_id}/rejeitar_pedido/{pedido_id}")
