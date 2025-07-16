@@ -1,3 +1,5 @@
+from schemas.pedido import PedidoRead
+from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -29,6 +31,20 @@ def atualizar_disponibilidade(id: int, disponivel: bool, db: Session = Depends(g
     entregador.disponivel = disponivel
     db.commit()
     return entregador
+
+# Rota para visualizar pedidos entregues do entregador
+@router.get("/entregador/{entregador_id}/pedidos_entregues", response_model=List[PedidoRead])
+def visualizar_pedidos_entregues(entregador_id: int, db: Session = Depends(get_db)):
+    pedidos = db.query(Pedido).filter(Pedido.entregador_id == entregador_id, Pedido.status == "entregue").all()
+    return pedidos
+
+# Rota para visualizar pedido entregue pelo id e entregador
+@router.get("/entregador/{entregador_id}/pedido_entregue/{pedido_id}", response_model=PedidoRead)
+def visualizar_pedido_entregue(entregador_id: int, pedido_id: int, db: Session = Depends(get_db)):
+    pedido = db.query(Pedido).filter(Pedido.pedido_id == pedido_id, Pedido.entregador_id == entregador_id, Pedido.status == "entregue").first()
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido entregue não encontrado para este entregador")
+    return pedido
 
 @router.put("/entregador/{id}/saldo")
 def atualizar_saldo_entregador(id: int, saldo: float, db: Session = Depends(get_db)):
